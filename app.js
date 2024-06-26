@@ -21,12 +21,12 @@ if (!fs.existsSync("./public/videos")) {
 }
 
 const app = express();
-const port = process.env.PORT ?? 3000;
+const port = process.env.PORT;
 
 app.use(express.json());
 app.use(express.static("public/songs"));
 const corsOptions = {
-  origin: "http://localhost:3000",
+  origin: `http://localhost:${port}`,
   methods: "GET,HEAD,POST",
 };
 
