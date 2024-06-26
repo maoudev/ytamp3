@@ -26,7 +26,7 @@ const port = process.env.PORT;
 app.use(express.json());
 app.use(express.static("public/songs"));
 const corsOptions = {
-  origin: `http://localhost:${port}`,
+  origin: "*",
   methods: "GET,HEAD,POST",
 };
 
