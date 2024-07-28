@@ -10,14 +10,14 @@ export default function DownloadButton({
   const handleClick = async () => {
     handleUrl();
     handleDone(false);
-    const response = await fetch(`/yt/song/${fileName}`, {
-      method: "GET",
-    });
+    const fileUrl = `http://localhost:8080/${fileName}.mp3`; // La URL del archivo en la carpeta pública
 
-    let link = document.createElement("a");
-    link.href = window.URL.createObjectURL(await response.blob());
-    link.download = fileName.split("_").join(" ");
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.setAttribute('download', fileName); // Atributo para forzar la descarga
+    document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
 
     window.URL.revokeObjectURL(link.href);
   };

@@ -1,5 +1,5 @@
 export const getSong = async (url: string) => {
-  const response = await fetch(`/yt/download`, {
+  const response = await fetch(`http://localhost:8080/download`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
