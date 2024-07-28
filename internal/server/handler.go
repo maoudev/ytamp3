@@ -101,7 +101,7 @@ func saveSong(fileName string) error {
 	videoFileName := filepath.Join("public/video", fileName+".mp4")
 	songFileName := filepath.Join("public/song", fileName+".mp3")
 
-	cmd := exec.Command("ffmpeg", "-i", videoFileName, "-vn", "-ar", "44100", "-ac", "2", "-b:a", "320k", songFileName)
+	cmd := exec.Command("ffmpeg", "-y", "-i", videoFileName, "-vn", "-ar", "44100", "-ac", "2", "-b:a", "320k", songFileName)
 	if err := cmd.Run(); err != nil {
 		return err
 	}
