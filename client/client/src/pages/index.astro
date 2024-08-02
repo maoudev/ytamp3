@@ -1,6 +1,6 @@
 ---
-import Layout from "../layouts/Layout.astro";
-import Form from "../components/react/Form";
+import Layout from "@/layouts/Layout.astro";
+import DownloadForm from "@/components/react/DownloadForm";
 ---
 
 <Layout
@@ -21,8 +21,9 @@ import Form from "../components/react/Form";
       </p>
     </section>
     <section>
-      <Form client:only="react" />
+      <DownloadForm client:load />
     </section>
+
   </main>
 </Layout>
 
