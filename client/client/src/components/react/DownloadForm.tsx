@@ -81,7 +81,7 @@ const DownloadForm: React.FC<DownloadFormProps> = ({ apiKey }) => {
         const response = downloadVideos(videoList)
         response.then(function ({ data }: { data: APIResponse }) {
             data.files.forEach((v) => {
-                const fileUrl = `http://localhost:8080/${v.file}.mp3`;
+                const fileUrl = `https://ytamp3.com/yt/${v.file}.mp3`;
 
                 const link = document.createElement('a');
                 link.href = fileUrl;
