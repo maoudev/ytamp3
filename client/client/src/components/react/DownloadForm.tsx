@@ -6,8 +6,11 @@ import {downloadVideos} from "@/api/api.ts";
 
 const URL_REGEX = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(?:-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|live\/|v\/)?)([\w\-]+)(\S+)?$/;
 
+interface DownloadFormProps {
+    apiKey: string;
+}
 
-const DownloadForm = () => {
+const DownloadForm: React.FC<DownloadFormProps> = ({ apiKey }) => {
     const [ url, setUrl ] = useState<string>("");
     const [ videoList, setVideoList ] = useState<Video[]>([])
     const [ isInputEmpty, setIsInputEmpty ] = useState<boolean>(false)
@@ -208,7 +211,7 @@ const DownloadForm = () => {
 
 
             <div className={"mt-5 flex items-center justify-center"}>
-                <VideoList videos={videoList} removeVideo={removeVideo}/>
+                <VideoList videos={videoList} removeVideo={removeVideo} apiKey={apiKey}/>
             </div>
         </>
     )

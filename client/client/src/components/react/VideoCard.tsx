@@ -1,5 +1,5 @@
 import {useEffect, useState} from "react";
-import type {Video, VideoInfo, YoutubeAPI} from "@/types/types.ts";
+import type {VideoInfo, YoutubeAPI} from "@/types/types.ts";
 
 import axios from "axios";
 import getVideoId from 'get-video-id';
@@ -9,9 +9,10 @@ import getVideoId from 'get-video-id';
 interface VideoCardProps {
     url: string;
     removeVideo:  Function;
+    apiKey: string;
 }
 
-const VideoCard: React.FC<VideoCardProps> = ({ url, removeVideo }) => {
+const VideoCard: React.FC<VideoCardProps> = ({ url, removeVideo, apiKey }) => {
     const [ videoInfo, setVideoInfo ] = useState<VideoInfo>({ title: "", channel: "", thumbnailUrl: "" });
 
 
@@ -20,7 +21,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ url, removeVideo }) => {
             const id = getVideoId(url)
            const data = await axios.get(`https://yt-api.p.rapidapi.com/video/info?id=${id.id}`, {
                headers: {
-                   'x-rapidapi-key': 'af8ad1bbefmsh454538bb2a2197bp1001adjsn76fdfb530abc',
+                   'x-rapidapi-key': apiKey,
                    'x-rapidapi-host': 'yt-api.p.rapidapi.com'
                }
            })

@@ -1,6 +1,8 @@
 ---
 import Layout from "@/layouts/Layout.astro";
 import DownloadForm from "@/components/react/DownloadForm";
+
+const YT_API_KEY = import.meta.env.YT_API_KEY
 ---
 
 <Layout
@@ -21,7 +23,7 @@ import DownloadForm from "@/components/react/DownloadForm";
       </p>
     </section>
     <section>
-      <DownloadForm client:load />
+      <DownloadForm client:load apiKey={YT_API_KEY}/>
     </section>
 
   </main>
