@@ -11,9 +11,21 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
 	"time"
 	"ytamp3/pkg/models"
 )
+
+func DownloadManySongs(c *gin.Context) {
+	var requests []*models.DownloadRequest
+	if err := c.Bind(&requests); err != nil {
+		c.JSON(http.StatusBadRequest, nil)
+		return
+	}
+
+	downloadMany(c, requests)
+
+}
 
 func DownloadSong(c *gin.Context) {
 	var video *models.DownloadRequest
@@ -24,6 +36,69 @@ func DownloadSong(c *gin.Context) {
 
 	downloadSong(video.URL, c)
 
+}
+
+func downloadMany(c *gin.Context, request []*models.DownloadRequest) {
+	wg := &sync.WaitGroup{}
+	ch := make(chan *models.DownloadResponse)
+
+	for _, song := range request {
+		wg.Add(1)
+		go downloadSongGo(song.URL, wg, ch)
+	}
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	var files []*models.DownloadResponse
+	for result := range ch {
+		files = append(files, result)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"files": files,
+	})
+}
+
+func downloadSongGo(url string, wg *sync.WaitGroup, ch chan *models.DownloadResponse) {
+
+	client := youtube.Client{}
+
+	video, err := client.GetVideo(url)
+	if err != nil {
+		return
+	}
+	format := video.Formats.WithAudioChannels()
+
+	stream, _, err := client.GetStream(video, &format[0])
+	if err != nil {
+		return
+	}
+
+	fileName := video.Title
+
+	if err = saveVideo(fileName, stream); err != nil {
+		return
+	}
+
+	if err = saveSong(fileName); err != nil {
+		return
+	}
+
+	if err = addMetadata(fileName, video.Title, video.Author); err != nil {
+		return
+	}
+
+	if err = removeVideo(fileName); err != nil {
+		return
+	}
+
+	ch <- &models.DownloadResponse{File: fileName}
+
+	removeSong(fileName)
+	defer wg.Done()
 }
 
 func downloadSong(url string, c *gin.Context) {
@@ -50,23 +125,17 @@ func downloadSong(url string, c *gin.Context) {
 	}
 
 	if err = saveSong(fileName); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err,
-		})
+		c.JSON(http.StatusInternalServerError, nil)
 		return
 	}
 
 	if err = addMetadata(fileName, video.Title, video.Author); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err,
-		})
+		c.JSON(http.StatusInternalServerError, nil)
 		return
 	}
 
 	if err = removeVideo(fileName); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": err,
-		})
+		c.JSON(http.StatusInternalServerError, nil)
 		return
 	}
 

@@ -8,5 +8,3 @@ export const downloadVideos = (videos: Video[]) => {
         }
     })
 }
-
-console.log(import.meta.env.YT_API_KEY);
