@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/kkdai/youtube/v2"
 	"io"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"sync"
 	"time"
 	"ytamp3/pkg/models"
+	"ytamp3/pkg/utils"
 )
 
 func DownloadManySongs(c *gin.Context) {
@@ -30,11 +32,28 @@ func DownloadManySongs(c *gin.Context) {
 func DownloadSong(c *gin.Context) {
 	var video *models.DownloadRequest
 	if err := c.BindJSON(&video); err != nil {
-		c.JSON(http.StatusBadRequest, nil)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	downloadSong(video.URL, c)
+	pth := filepath.Join("internal", "server", "cookies.json")
+
+	absPath, err := filepath.Abs(pth)
+	if err != nil {
+		log.Fatalf("Error obtaining absolute path: %v", err)
+	}
+
+	cookies, err := utils.LoadCookiesFromFile(absPath)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	customHttpClient := &http.Client{
+		Jar: utils.GetCookieJar(cookies),
+	}
+
+	downloadSong(video.URL, c, customHttpClient)
 
 }
 
@@ -42,9 +61,26 @@ func downloadMany(c *gin.Context, request []*models.DownloadRequest) {
 	wg := &sync.WaitGroup{}
 	ch := make(chan *models.DownloadResponse)
 
+	pth := filepath.Join("internal", "server", "cookies.json")
+
+	absPath, err := filepath.Abs(pth)
+	if err != nil {
+		log.Fatalf("Error obtaining absolute path: %v", err)
+	}
+
+	cookies, err := utils.LoadCookiesFromFile(absPath)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	customHttpClient := &http.Client{
+		Jar: utils.GetCookieJar(cookies),
+	}
+
 	for _, song := range request {
 		wg.Add(1)
-		go downloadSongGo(song.URL, wg, ch)
+		go downloadSongGo(song.URL, wg, ch, customHttpClient)
 	}
 
 	go func() {
@@ -62,9 +98,11 @@ func downloadMany(c *gin.Context, request []*models.DownloadRequest) {
 	})
 }
 
-func downloadSongGo(url string, wg *sync.WaitGroup, ch chan *models.DownloadResponse) {
+func downloadSongGo(url string, wg *sync.WaitGroup, ch chan *models.DownloadResponse, customHttpClient *http.Client) {
 
-	client := youtube.Client{}
+	client := youtube.Client{
+		HTTPClient: customHttpClient,
+	}
 
 	video, err := client.GetVideo(url)
 	if err != nil {
@@ -101,12 +139,15 @@ func downloadSongGo(url string, wg *sync.WaitGroup, ch chan *models.DownloadResp
 	defer wg.Done()
 }
 
-func downloadSong(url string, c *gin.Context) {
-	client := youtube.Client{}
+func downloadSong(url string, c *gin.Context, customHttpClient *http.Client) {
+
+	client := youtube.Client{
+		HTTPClient: customHttpClient,
+	}
 
 	video, err := client.GetVideo(url)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, nil)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	format := video.Formats.WithAudioChannels()
